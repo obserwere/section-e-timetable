@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Section E Dashboard | IIM Raipur</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f4f7f6;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .container {
+            max-width: 600px;
+            width: 100%;
+            background: #fff;
+            padding: 24px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 24px;
+        }
+        .status-card {
+            background: #e3f2fd;
+            border-left: 4px solid #2196f3;
+            padding: 16px;
+            border-radius: 4px;
+            margin-bottom: 24px;
+        }
+        .status-title { margin: 0 0 8px 0; font-size: 0.9em; color: #555; text-transform: uppercase; letter-spacing: 1px;}
+        .status-main { margin: 0; font-size: 1.4em; font-weight: bold; color: #1565c0; }
+        .time-left { font-size: 1.1em; color: #d32f2f; font-weight: bold; margin-top: 8px;}
+        
+        .upcoming-list { list-style: none; padding: 0; margin: 0; }
+        .class-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 16px 0;
+            border-bottom: 1px solid #eee;
+        }
+        .class-item:last-child { border-bottom: none; }
+        .class-details h4 { margin: 0 0 4px 0; font-size: 1.1em; }
+        .class-details p { margin: 0; color: #666; font-size: 0.9em; }
+        .class-time { font-weight: bold; color: #444; }
+        
+        .btn {
+            display: block;
+            width: 100%;
+            padding: 14px;
+            background: #333;
+            color: #fff;
+            text-align: center;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: bold;
+            margin-top: 24px;
+            transition: background 0.3s;
+        }
+        .btn:hover { background: #555; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <h2>Section E - Pre-Mid Dashboard</h2>
+        <p id="current-date"></p>
+    </div>
+
+    <div class="status-card" id="ongoing-container" style="display: none;">
+        <p class="status-title">Ongoing Class</p>
+        <p class="status-main" id="ongoing-class-name"></p>
+        <p class="status-title" id="ongoing-prof" style="margin-top:4px;"></p>
+        <div class="time-left" id="time-left"></div>
+    </div>
+
+    <h3 style="margin-bottom: 12px;">Today's Upcoming Classes</h3>
+    <ul class="upcoming-list" id="upcoming-list">
+        </ul>
+
+    <a href="Section E.pdf" target="_blank" class="btn">View Full PDF Schedule</a>
+</div>
+
+<script>
+    // Section E Pre-Mid Term Schedule based on the provided PDF
+    const schedule = {
+        1: [ // Monday
+            { name: "MMI", prof: "Prof. Dhananjay Bapat", start: "08:30", end: "10:00" },
+            { name: "OMI", prof: "Prof. Jighyasu Gaur", start: "10:15", end: "11:45" },
+            { name: "MIE", prof: "Prof. Rashmi Shukla", start: "12:00", end: "13:30" }
+        ],
+        2: [ // Tuesday
+            { name: "FAC", prof: "Prof. Rajesh Pathak", start: "08:30", end: "10:00" },
+            { name: "QMI", prof: "Prof. Anand Kumar", start: "10:15", end: "11:45" }
+        ],
+        3: [ // Wednesday
+            { name: "MMI", prof: "Prof. Dhananjay Bapat", start: "08:30", end: "10:00" },
+            { name: "MIE", prof: "Prof. Rashmi Shukla", start: "12:00", end: "13:30" }
+        ],
+        4: [ // Thursday
+            { name: "OMI", prof: "Prof. Jighyasu Gaur", start: "10:15", end: "11:45" }
+        ],
+        5: [ // Friday
+            { name: "FAC", prof: "Prof. Rajesh Pathak", start: "08:30", end: "10:00" },
+            { name: "QMI", prof: "Prof. Anand Kumar", start: "10:15", end: "11:45" }
+        ]
+    };
+
+    function parseTime(timeStr) {
+        const [hours, minutes] = timeStr.split(':').map(Number);
+        const d = new Date();
+        d.setHours(hours, minutes, 0, 0);
+        return d;
+    }
+
+    function updateDashboard() {
+        const now = new Date();
+        const day = now.getDay(); 
+        
+        document.getElementById('current-date').innerText = now.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
+        
+        const todaysClasses = schedule[day] || [];
+        let ongoingClass = null;
+        let upcomingClasses = [];
+
+        todaysClasses.forEach(cls => {
+            const startTime = parseTime(cls.start);
+            const endTime = parseTime(cls.end);
+
+            if (now >= startTime && now <= endTime) {
+                ongoingClass = { ...cls, endTimeObj: endTime };
+            } else if (now < startTime) {
+                upcomingClasses.push(cls);
+            }
+        });
+
+        // Update Ongoing Class UI
+        const ongoingContainer = document.getElementById('ongoing-container');
+        if (ongoingClass) {
+            ongoingContainer.style.display = 'block';
+            document.getElementById('ongoing-class-name').innerText = ongoingClass.name;
+            document.getElementById('ongoing-prof').innerText = ongoingClass.prof;
+            
+            const diffMs = ongoingClass.endTimeObj - now;
+            const diffMins = Math.floor(diffMs / 60000);
+            document.getElementById('time-left').innerText = `${diffMins} minutes remaining`;
+        } else {
+            ongoingContainer.style.display = 'none';
+        }
+
+        // Update Upcoming Classes UI
+        const upcomingList = document.getElementById('upcoming-list');
+        upcomingList.innerHTML = '';
+        if (upcomingClasses.length > 0) {
+            upcomingClasses.forEach(cls => {
+                const li = document.createElement('li');
+                li.className = 'class-item';
+                li.innerHTML = `
+                    <div class="class-details">
+                        <h4>${cls.name}</h4>
+                        <p>${cls.prof}</p>
+                    </div>
+                    <div class="class-time">${cls.start} - ${cls.end}</div>
+                `;
+                upcomingList.appendChild(li);
+            });
+        } else {
+            upcomingList.innerHTML = '<li class="class-item"><div class="class-details"><p>No more classes today! Enjoy your free time.</p></div></li>';
+        }
+    }
+
+    // Initialize and set interval to update every minute
+    updateDashboard();
+    setInterval(updateDashboard, 60000);
+</script>
+</body>
+</html>
